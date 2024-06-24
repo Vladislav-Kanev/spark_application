@@ -1,5 +1,7 @@
 ## Запуск
 
+Датасет: https://www.kaggle.com/datasets/rupakroy/online-payments-fraud-detection-dataset/
+
 Для того чтобы запустить приложение необходимо выполнить следующие соманды:
 
 Для приложения с 1 датанодой и без оптимизации
