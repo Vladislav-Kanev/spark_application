@@ -1,0 +1,112 @@
+version: "3"
+
+services:
+  namenode3:
+    image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8
+    container_name: namenode3
+    restart: always
+    ports:
+      - 9870:9870
+    volumes:
+      - hadoop_namenode3:/hadoop/dfs/name
+    env_file:
+      - ./hadoop-3.env
+    environment:
+      - CLUSTER_NAME=test
+      - HDFS_CONF_dfs_blocksize=67108864
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+
+  datanode1:
+    image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
+    container_name: datanode1
+    restart: always
+    volumes:
+      - hadoop_datanode1:/hadoop/dfs/data
+    environment:
+      SERVICE_PRECONDITION: "namenode3:9870"
+    env_file:
+      - ./hadoop-3.env
+    deploy:
+      resources:
+        limits:
+          memory: 6G
+
+  datanode2:
+    image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
+    container_name: datanode2
+    restart: always
+    volumes:
+      - hadoop_datanode2:/hadoop/dfs/data
+    environment:
+      SERVICE_PRECONDITION: "namenode3:9870"
+    env_file:
+      - ./hadoop-3.env
+    deploy:
+      resources:
+        limits:
+          memory: 6G
+
+  datanode3:
+    image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
+    container_name: datanode3
+    restart: always
+    volumes:
+      - hadoop_datanode3:/hadoop/dfs/data
+    environment:
+      SERVICE_PRECONDITION: "namenode3:9870"
+    env_file:
+      - ./hadoop-3.env
+    deploy:
+      resources:
+        limits:
+          memory: 6G
+
+  spark-master3:
+    image: bde2020/spark-master:3.0.0-hadoop3.2
+    container_name: spark-master3
+    depends_on:
+      - namenode3
+      - datanode1
+      - datanode2
+      - datanode3
+    ports:
+      - "8080:8080"
+      - "7077:7077"
+    environment:
+      - INIT_DAEMON_STEP=setup_spark
+    env_file:
+      - ./hadoop-3.env
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+
+  spark-worker-3:
+    build:
+      context: .
+      dockerfile: dockerfile
+    container_name: spark-worker-3
+    depends_on:
+      - spark-master3
+    ports:
+      - "8081:8081"
+    env_file: ./hadoop-3.env
+    deploy:
+      resources:
+        limits:
+          memory: 6G
+    volumes:
+      - ../src/spark.py:/opt/spark-apps/spark.py
+      - ../src/utils.py:/opt/spark-apps/utils.py
+      - ../src/data_preprocess.py:/opt/spark-apps/data_preprocess.py
+    environment:
+      - "SPARK_MASTER=spark://spark-master3:7077"
+
+volumes:
+  hadoop_namenode3:
+  hadoop_datanode1:
+  hadoop_datanode2:
+  hadoop_datanode3:
